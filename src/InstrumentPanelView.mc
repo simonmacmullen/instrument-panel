@@ -197,7 +197,7 @@ class InstrumentPanelView extends Ui.View {
 
     function fmtSpeed(m) {
         if (m == null) {
-            return 55;//null;
+            return null;
         }
         if (speedMetric) {
             return (m * 3.6).toNumber();
