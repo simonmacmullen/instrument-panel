@@ -161,7 +161,11 @@ class InstrumentPanelView extends Ui.View {
 
     function fmtTime(time) {
         var hour = time.hour;
-        var min = time.min.format("%.2d");
+        var min = time.min.toString();
+        // TODO remove when printf works on device
+        if (min.length() == 1) {
+            min = "0" + min;
+        }
         if (time24h) {
             return hour + ":" + min;
         }
