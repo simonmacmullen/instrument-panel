@@ -20,7 +20,8 @@ class InstrumentPanelView extends Ui.View {
     var speed = null;
     var heading = null;
     var position = null;
-    var altitude = null;
+    var altitudeBaro = null;
+    var altitudeGPS = null;
     var temperature = null;
     var posQualities = ["None", "Last", "Poor", "OK", "Good"];
     var posQuality = posQualities[0];
@@ -77,12 +78,34 @@ class InstrumentPanelView extends Ui.View {
             }
         }
         else if (mode == MODE_ALTITUDE) {
-            var altitudeTxt = "";
-            if (altitude != null) {
-                altitudeTxt = altitude + (elevMetric ? "m" : "ft");
+            var txt = "";
+            var txt2 = "";
+            var unit = elevMetric ? "m" : "ft";
+            if (altitudeBaro != null && altitudeGPS != null) {
+                if (altitudeGPS - altitudeBaro < 10 &&
+                    altitudeGPS - altitudeBaro > -10) {
+                    txt = altitudeGPS + unit;
+                    txt2 = "(Both)";
+                }
+                else {
+                    // TODO can this case actually happen?
+                    txt = altitudeBaro + unit;
+                    txt2 = altitudeGPS + unit + " (GPS)";
+                }
             }
-            dc.drawText(109, 155, Graphics.FONT_TINY,
-                        altitudeTxt, Graphics.TEXT_JUSTIFY_CENTER);
+            else if (altitudeBaro != null) {
+                txt = altitudeBaro + unit;
+                txt2 = "(Baro)";
+            }
+            else if (altitudeGPS != null) {
+                txt = altitudeGPS + unit;
+                txt2 = "(GPS)";
+            }
+            dc.drawText(109, 155, Graphics.FONT_TINY, txt,
+                        Graphics.TEXT_JUSTIFY_CENTER);
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(109, 175, Graphics.FONT_XTINY, txt2,
+                        Graphics.TEXT_JUSTIFY_CENTER);
         }
         else if (mode == MODE_TIME) {
             var timeTxt = fmtTime(System.getClockTime());
@@ -98,8 +121,9 @@ class InstrumentPanelView extends Ui.View {
             var positionTxt2 = "";
             if (position != null) {
                 positionTxt = position.toGeoString(Position.GEO_DEG);
-                positionTxt2 = positionTxt.substring(11, 20);
-                positionTxt = positionTxt.substring(0, 9);
+                var sz = positionTxt.length();
+                positionTxt2 = positionTxt.substring(sz / 2, sz);
+                positionTxt = positionTxt.substring(0, sz / 2);
             }
             dc.drawText(109, 145, Graphics.FONT_TINY,
                         positionTxt, Graphics.TEXT_JUSTIFY_CENTER);
@@ -107,7 +131,7 @@ class InstrumentPanelView extends Ui.View {
                         positionTxt2, Graphics.TEXT_JUSTIFY_CENTER);
             dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(109, 185, Graphics.FONT_XTINY,
-                        posQuality, Graphics.TEXT_JUSTIFY_CENTER);
+                        "(" + posQuality + ")", Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
@@ -277,13 +301,13 @@ class InstrumentPanelView extends Ui.View {
             }
         }
 
-        altitude = fmtAltitude(info.altitude);
+        altitudeGPS = fmtAltitude(info.altitude);
         Ui.requestUpdate();
     }
 
     function onSensor(info) {
         heading = info.heading;
-        altitude = fmtAltitude(info.altitude);
+        altitudeBaro = fmtAltitude(info.altitude);
         temperature = fmtTemp(info.temperature);
         Ui.requestUpdate();
     }
