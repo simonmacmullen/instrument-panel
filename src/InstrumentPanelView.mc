@@ -8,6 +8,13 @@ using Toybox.System;
 using Toybox.WatchUi as Ui;
 using Toybox.Application as App;
 
+enum {
+    MODE_COMPASS,
+    MODE_ALTITUDE,
+    MODE_TIME,
+    MODE_LAST
+}
+
 class InstrumentPanelView extends Ui.View {
     var speed = null;
     var heading = null;
@@ -22,6 +29,17 @@ class InstrumentPanelView extends Ui.View {
     var elevMetric = System.getDeviceSettings().elevationUnits == System.UNIT_METRIC;
     var tempMetric = System.getDeviceSettings().temperatureUnits == System.UNIT_METRIC;
     var time24h = System.getDeviceSettings().is24Hour;
+
+    var mode = MODE_COMPASS;
+
+    function cycleView() {
+        mode++;
+        if (mode == MODE_LAST) {
+            mode = MODE_COMPASS;
+        }
+        Ui.requestUpdate();
+    }
+
 
     //! Load your resources here
     function onLayout(dc) {
@@ -44,74 +62,86 @@ class InstrumentPanelView extends Ui.View {
     function onUpdate(dc) {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
-        
-        var width = dc.getWidth();
-        var height = dc.getHeight();
 
-        if (heading != null) {
-            var f = Graphics.FONT_MEDIUM;
-            drawTextPolar(dc, heading,               95, f, "N");
-            drawTextPolar(dc, heading - Math.PI / 2, 95, f, "E");
-            drawTextPolar(dc, heading + Math.PI / 2, 95, f, "W");
-            drawTextPolar(dc, heading + Math.PI,     95, f, "S");
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            var startAngle = heading + 0.25;
-            var endAngle = heading + Math.PI / 2 - 0.25;
-            for (var i = 0; i < 4; i++) {
-                drawArc(dc,
-                        startAngle + i * Math.PI / 2,
-                        endAngle + i * Math.PI / 2,
-                        90, 100);
+        drawSpeed(dc, 109, 109, 96);
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+
+        if (mode == MODE_COMPASS) {
+            if (heading != null) {
+                drawCompass(dc, 109, 170, 25);
             }
         }
+        else if (mode == MODE_ALTITUDE) {
+            var altitudeTxt = "---";
+            if (altitude != null) {
+                altitudeTxt = altitude + (elevMetric ? "m" : "ft");
+            }
+            dc.drawText(109, 155, Graphics.FONT_TINY,
+                        altitudeTxt, Graphics.TEXT_JUSTIFY_CENTER);
+        }
+        else if (mode == MODE_TIME) {
+            var timeTxt = fmtTime(System.getClockTime());
+            // TODO figure out why temperature doesn't work
+            // if (temperature != null) {
+            //     timeTxt += " " + temperature + (tempMetric ? "C" : "F");
+            // }
+            dc.drawText(109, 155, Graphics.FONT_TINY,
+                        timeTxt, Graphics.TEXT_JUSTIFY_CENTER);
+        }
+    }
 
+    function drawSpeed(dc, cX, cY, radius) {
         var startAngle = Math.PI - 1;
         var endAngle = -Math.PI + 1;
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawArc(dc, startAngle, endAngle, 79, 80);
-        drawTicks(dc, startAngle, endAngle, 65, 80, 11);
-        drawTicks(dc, startAngle, endAngle, 75, 80, 51);
+        drawArc(dc, cX, cY, startAngle, endAngle, radius - 1, radius);
+        drawTicks(dc, cX, cY, startAngle, endAngle, radius - 15, radius, 11);
+        drawTicks(dc, cX, cY, startAngle, endAngle, radius - 5, radius, 51);
         
-        drawTextPolar(dc, startAngle + 0.2, 70, Graphics.FONT_XTINY, "0");
-        drawTextPolar(dc, endAngle - 0.2, 70, Graphics.FONT_XTINY,
-                      "" + speedRange);
+        drawTextPolar(dc, cX, cY, startAngle + 0.2, radius - 5,
+                      Graphics.FONT_XTINY, "0");
+        drawTextPolar(dc, cX, cY, endAngle - 0.2, radius - 5,
+                      Graphics.FONT_XTINY, "" + speedRange);
 
-        dc.drawText(109, 105, Graphics.FONT_XTINY,
+        dc.drawText(cX, cY - 14, Graphics.FONT_XTINY,
                     speedMetric ? "km/h" : "mph", Graphics.TEXT_JUSTIFY_CENTER);
 
         var speedTxt = "---";
         
         if (speed != null) {
             dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-            drawArc(dc,
-                    startAngle,
+            drawArc(dc, cX, cY, startAngle,
                     interp(startAngle, endAngle, speed, speedRange),
-                    70, 80);
+                    radius - 1, radius + 9);
             speedTxt = "" + speed;
         }
-        
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(109, 50, Graphics.FONT_NUMBER_MEDIUM,
+        dc.drawText(cX, cY * 0.35, Graphics.FONT_NUMBER_MEDIUM,
                     speedTxt, Graphics.TEXT_JUSTIFY_CENTER);
+    }
 
-        var timeTxt = fmtTime(System.getClockTime());
-        if (temperature != null) {
-            timeTxt += " " + temperature + (tempMetric ? "C" : "F");
+    function drawCompass(dc, cX, cY, radius) {
+        var f = Graphics.FONT_XTINY;
+        drawTextPolar(dc, cX, cY, heading,               radius, f, "N");
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        drawTextPolar(dc, cX, cY, heading - Math.PI / 2, radius, f, "E");
+        drawTextPolar(dc, cX, cY, heading + Math.PI / 2, radius, f, "W");
+        drawTextPolar(dc, cX, cY, heading + Math.PI,     radius, f, "S");
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        var startAngle = heading + 0.5;
+        var endAngle = heading + Math.PI / 2 - 0.5;
+        for (var i = 0; i < 4; i++) {
+            drawArc(dc, cX, cY,
+                    startAngle + i * Math.PI / 2,
+                    endAngle + i * Math.PI / 2,
+                    radius, radius + 5);
         }
-        dc.drawText(109, 130, Graphics.FONT_XTINY,
-                    timeTxt, Graphics.TEXT_JUSTIFY_CENTER);
-
-        var altitudeTxt = "---";
-        if (altitude != null) {
-            altitudeTxt = altitude + (elevMetric ? "m" : "ft");
-        }
-        dc.drawText(109, 155, Graphics.FONT_XTINY,
-                    altitudeTxt, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function fmtTime(time) {
         var hour = time.hour;
-        var min = time.min.format("%2d");
+        var min = time.min.format("%.2d");
         if (time24h) {
             return hour + ":" + min;
         }
@@ -125,22 +155,14 @@ class InstrumentPanelView extends Ui.View {
         }
     }
 
-    function drawTextPolar(dc, angle, distance, font, text) {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-        var centerX = width / 2;
-        var centerY = height / 2;
-
+    function drawTextPolar(dc, centerX, centerY, angle, distance, font, text) {
         var xy = pol2Cart(centerX, centerY, angle, distance);
         dc.drawText(xy[0], xy[1], font, text,
                     Graphics.TEXT_JUSTIFY_CENTER|Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    function drawArc(dc, startAngle, endAngle, startDist, endDist) {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-        var centerX = width / 2;
-        var centerY = height / 2;
+    function drawArc(dc, centerX, centerY, startAngle, endAngle,
+                     startDist, endDist) {
         var n = 20;
         var poly = new[n * 2];
 
@@ -153,12 +175,8 @@ class InstrumentPanelView extends Ui.View {
         dc.fillPolygon(poly);
     }
 
-    function drawTicks(dc, startAngle, endAngle, startDist, endDist, count) {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-        var centerX = width / 2;
-        var centerY = height / 2;
-
+    function drawTicks(dc, centerX, centerY, startAngle, endAngle,
+                       startDist, endDist, count) {
         for (var i = 0; i < count; i++) {
             var angle = interp(startAngle, endAngle, i, count - 1);
             var xy1 = pol2Cart(centerX, centerY, angle, startDist);
@@ -244,6 +262,18 @@ class InstrumentPanelView extends Ui.View {
     }
 }
 
+class InstrumentPanelDelegate extends Ui.InputDelegate {
+    function onKey(evt) {
+        if (evt.getKey() == Ui.KEY_ENTER) {
+            widget.cycleView();
+            return true;
+        }
+        return false;
+    }
+}
+
+var widget;
+
 class InstrumentPanelApp extends App.AppBase {
     function onStart() {
     }
@@ -252,6 +282,7 @@ class InstrumentPanelApp extends App.AppBase {
     }
 
     function getInitialView() {
-        return [new InstrumentPanelView()];
+        widget = new InstrumentPanelView();
+        return [widget, new InstrumentPanelDelegate()];
     }
 }
