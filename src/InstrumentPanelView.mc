@@ -12,14 +12,18 @@ enum {
     MODE_COMPASS,
     MODE_ALTITUDE,
     MODE_TIME,
+    MODE_POSITION,
     MODE_LAST
 }
 
 class InstrumentPanelView extends Ui.View {
     var speed = null;
     var heading = null;
+    var position = null;
     var altitude = null;
     var temperature = null;
+    var posQualities = ["None", "Last", "Poor", "OK", "Good"];
+    var posQuality = posQualities[0];
 
     var speedMax = 0;
     var speedRange = 20;
@@ -73,7 +77,7 @@ class InstrumentPanelView extends Ui.View {
             }
         }
         else if (mode == MODE_ALTITUDE) {
-            var altitudeTxt = "---";
+            var altitudeTxt = "";
             if (altitude != null) {
                 altitudeTxt = altitude + (elevMetric ? "m" : "ft");
             }
@@ -88,6 +92,22 @@ class InstrumentPanelView extends Ui.View {
             // }
             dc.drawText(109, 155, Graphics.FONT_TINY,
                         timeTxt, Graphics.TEXT_JUSTIFY_CENTER);
+        }
+        else if (mode == MODE_POSITION) {
+            var positionTxt = "";
+            var positionTxt2 = "";
+            if (position != null) {
+                positionTxt = position.toGeoString(Position.GEO_DEG);
+                positionTxt2 = positionTxt.substring(11, 20);
+                positionTxt = positionTxt.substring(0, 9);
+            }
+            dc.drawText(109, 145, Graphics.FONT_TINY,
+                        positionTxt, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(109, 165, Graphics.FONT_TINY,
+                        positionTxt2, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(109, 185, Graphics.FONT_XTINY,
+                        posQuality, Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
@@ -236,6 +256,9 @@ class InstrumentPanelView extends Ui.View {
         if (heading == null) {
             heading = info.heading;
         }
+        
+        position = info.position;
+        posQuality = posQualities[info.accuracy];
 
         speed = fmtSpeed(info.speed);
         if (speed != null and speed > speedMax) {
