@@ -16,6 +16,10 @@ enum {
     MODE_LAST
 }
 
+enum {
+    MODE
+}
+
 class InstrumentPanelView extends Ui.View {
     var speed = null;
     var heading = null;
@@ -56,11 +60,19 @@ class InstrumentPanelView extends Ui.View {
         Sensor.enableSensorEvents( method(:onSensor) );
         Position.enableLocationEvents(Position.LOCATION_CONTINUOUS,
                                       method(:onLocation));
+
+        var app = App.getApp();
+        var modeProp = app.getProperty(MODE);
+        if (modeProp != null) {
+            mode = modeProp;
+        }
     }
 
     //! Called when this View is removed from the screen. Save the
     //! state of your app here.
     function onHide() {
+        var app = App.getApp();
+        app.setProperty(MODE, mode);
     }
 
     //! Update the view
