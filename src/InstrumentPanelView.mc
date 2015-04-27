@@ -97,7 +97,7 @@ class InstrumentPanelView extends Ui.View {
                 if (altitudeGPS - altitudeBaro < 10 &&
                     altitudeGPS - altitudeBaro > -10) {
                     txt = altitudeGPS + unit;
-                    txt2 = "(Both)";
+                    txt2 = "(Baro/GPS)";
                 }
                 else {
                     // TODO can this case actually happen?
