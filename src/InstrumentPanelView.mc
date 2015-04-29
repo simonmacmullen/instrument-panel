@@ -113,10 +113,10 @@ class InstrumentPanelView extends Ui.View {
                 txt = altitudeGPS + unit;
                 txt2 = "(GPS)";
             }
-            dc.drawText(109, 155, Graphics.FONT_TINY, txt,
+            dc.drawText(109, 155, Graphics.FONT_SMALL, txt,
                         Graphics.TEXT_JUSTIFY_CENTER);
-            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(109, 175, Graphics.FONT_XTINY, txt2,
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(109, 175, Graphics.FONT_TINY, txt2,
                         Graphics.TEXT_JUSTIFY_CENTER);
         }
         else if (mode == MODE_TIME) {
@@ -125,7 +125,7 @@ class InstrumentPanelView extends Ui.View {
             // if (temperature != null) {
             //     timeTxt += " " + temperature + (tempMetric ? "C" : "F");
             // }
-            dc.drawText(109, 155, Graphics.FONT_TINY,
+            dc.drawText(109, 155, Graphics.FONT_SMALL,
                         timeTxt, Graphics.TEXT_JUSTIFY_CENTER);
         }
         else if (mode == MODE_POSITION) {
@@ -141,8 +141,8 @@ class InstrumentPanelView extends Ui.View {
                         positionTxt, Graphics.TEXT_JUSTIFY_CENTER);
             dc.drawText(109, 165, Graphics.FONT_TINY,
                         positionTxt2, Graphics.TEXT_JUSTIFY_CENTER);
-            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(109, 185, Graphics.FONT_XTINY,
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(109, 185, Graphics.FONT_TINY,
                         "(" + posQuality + ")", Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
@@ -150,17 +150,17 @@ class InstrumentPanelView extends Ui.View {
     function drawSpeed(dc, cX, cY, radius) {
         var startAngle = Math.PI - 1;
         var endAngle = -Math.PI + 1;
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawArc(dc, cX, cY, startAngle, endAngle, radius - 1, radius);
-        drawTicks(dc, cX, cY, startAngle, endAngle, radius - 15, radius, 11);
-        drawTicks(dc, cX, cY, startAngle, endAngle, radius - 5, radius, 51);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        drawArc(dc, cX, cY, startAngle, endAngle, radius - 11, radius - 10);
+        drawTicks(dc, cX, cY, startAngle, endAngle, radius - 25, radius - 10, 11);
+        drawTicks(dc, cX, cY, startAngle, endAngle, radius - 15, radius - 10, 51);
         
-        drawTextPolar(dc, cX, cY, startAngle + 0.2, radius - 5,
-                      Graphics.FONT_XTINY, "0");
-        drawTextPolar(dc, cX, cY, endAngle - 0.2, radius - 5,
-                      Graphics.FONT_XTINY, "" + speedRange);
+        drawTextPolar(dc, cX, cY, startAngle + 0.2, radius - 15,
+                      Graphics.FONT_TINY, "0");
+        drawTextPolar(dc, cX, cY, endAngle - 0.2, radius - 15,
+                      Graphics.FONT_TINY, "" + speedRange);
 
-        dc.drawText(cX, cY - 14, Graphics.FONT_XTINY,
+        dc.drawText(cX, cY - 14, Graphics.FONT_TINY,
                     speedMetric ? "km/h" : "mph", Graphics.TEXT_JUSTIFY_CENTER);
 
         var speedTxt = "---";
@@ -169,7 +169,7 @@ class InstrumentPanelView extends Ui.View {
             dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
             drawArc(dc, cX, cY, startAngle,
                     interp(startAngle, endAngle, speed, speedRange),
-                    radius - 1, radius + 9);
+                    radius - 11, radius + 20);
             speedTxt = "" + speed;
         }
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -178,12 +178,13 @@ class InstrumentPanelView extends Ui.View {
     }
 
     function drawCompass(dc, cX, cY, radius) {
-        var f = Graphics.FONT_XTINY;
+        var f = Graphics.FONT_SMALL;
         drawTextPolar(dc, cX, cY, heading,               radius, f, "N");
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
         drawTextPolar(dc, cX, cY, heading - Math.PI / 2, radius, f, "E");
         drawTextPolar(dc, cX, cY, heading + Math.PI / 2, radius, f, "W");
         drawTextPolar(dc, cX, cY, heading + Math.PI,     radius, f, "S");
+
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         var startAngle = heading + 0.5;
         var endAngle = heading + Math.PI / 2 - 0.5;
